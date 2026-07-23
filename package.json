@@ -1,0 +1,16 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "A quality backend project",
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "license": "ISC",
+  "author": "Ayush Singh",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": ""
+  }
+}
