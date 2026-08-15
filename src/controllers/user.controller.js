@@ -21,13 +21,20 @@ const userRegister = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new apiErrors(409, "Username or email already exist")
     }
-
+    
     const localavatarFile = req.files?.avatar[0]?.path;
-    const localcoverimageFile = req.files?.coverImage[0]?.path;
-
+   
+    let localcoverimageFile;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
+        localcoverimageFile = req.files.coverImage[0].path
+    }
+    
     if(!localavatarFile){
         throw new apiErrors(400,"Avatar is required");
     }
+    const avatar = await uploadOncloudinary(localavatarFile);
+    const coverImage = await uploadOncloudinary(localcoverimageFile);
+
 
     const user = await User.create({
         fullName,
@@ -46,8 +53,6 @@ const userRegister = asyncHandler(async (req, res) => {
         throw new apiErrors(500,"Something went wrong while creating the user!!(")
     }
 
-    const avatar = await uploadOncloudinary(localavatarFile);
-    const coverImage = await uploadOncloudinary(localcoverimageFile);
 
     return res.status(201).json(
         new apiRes(200,createdUser,"User registered Sucessfully")

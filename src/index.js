@@ -3,7 +3,7 @@ import connectDB from "./db/index.js";
 import { app } from "./aap.js";
 
 dotenv.config({
-    path: "./env"
+    path: "./.env"
 })
 
 const startServer = async ()=>{
