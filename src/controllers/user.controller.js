@@ -66,8 +66,8 @@ const loginUser = asyncHandler(async (req, res) => {
     const generateAccessandRefreshTokens = async (userId) => {
         try {
             const user = await User.findById(userId)
-            const accessToken = req.generateAccessToken()
-            const refreshToken = req.generateRefreshToken()
+            const accessToken = user.generateAccessToken()
+            const refreshToken = user.generateRefreshToken()
 
             user.refreshToken = refreshToken
             user.save({validateBeforeSave:false}) 
