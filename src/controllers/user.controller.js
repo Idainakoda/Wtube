@@ -143,4 +143,102 @@ const logoutUser = asyncHandler(async(req,res)=>{
     .json(new apiRes(200, "User Logged Out Successfully:))"))
 })
 
-export { userRegister, loginUser,logoutUser }
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    try {
+        // 1. Get refresh token from cookie or request body
+        const incomingRefreshToken =
+            req.cookies?.refreshToken ||
+            req.body?.refreshToken;
+
+        // 2. If no refresh token was provided
+        if (!incomingRefreshToken) {
+            throw new apiErrors(401, "Unauthorized request");
+        }
+
+        // 3. Verify the refresh token
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.SECRET_REFRESH_TOKEN
+        );
+
+        // 4. Find the existing user using the _id
+        const user = await User.findById(decodedToken?._id);
+
+        // 5. If user doesn't exist
+        if (!user) {
+            throw new apiErrors(401, "Invalid refresh token");
+        }
+
+        // 6. Check whether the incoming token matches
+        //    the refresh token stored in MongoDB
+        if (incomingRefreshToken !== user.refreshToken) {
+            throw new apiErrors(
+                401,
+                "Refresh token is expired or already used"
+            );
+        }
+
+        // 7. Generate NEW access + refresh tokens
+        const {
+            accessToken,
+            refreshToken: newRefreshToken
+        } = await generateAccessAndRefreshTokens(user._id);
+
+        // 8. Cookie options
+        const options = {
+            httpOnly: true,
+            secure: true
+        };
+
+        // 9. Send new tokens
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new apiRes(
+                    200,
+                    {
+                        accessToken,
+                        refreshToken: newRefreshToken
+                    },
+                    "Access token refreshed successfully"
+                )
+            );
+
+    } catch (error) {
+        throw new apiErrors(
+            401,
+            error?.message || "Invalid refresh token"
+        );
+    }
+});
+
+const changeCurrentPassword = asyncHandler(async(req,res)=>{
+    const {oldpassword,newpassword} = req.body;
+    const user = await User.findById(req.user?.id)
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldpassword)
+
+    if(!isPasswordCorrect){
+        throw new apiErrors(400,"Invaid Password")
+    }
+
+    user.password = newpassword
+    user.save({
+        validateBeforeSave:false
+    })
+
+    return res
+    .status(200)
+    .json(new apiRes(200,{},"Password change succesffully"))
+})
+
+
+const getCurrentUser = asyncHandler(async(req,res)=>{
+    return res
+    .status(200)
+    .json(200,req.user,"Current user fetched succesfully")
+})
+
+export { userRegister, loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser }
