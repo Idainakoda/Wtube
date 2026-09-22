@@ -70,9 +70,9 @@ const loginUser = asyncHandler(async (req, res) => {
             const refreshToken = user.generateRefreshToken()
 
             user.refreshToken = refreshToken
-            user.save({validateBeforeSave:false}) 
-            
-            return {accessToken,refreshToken}
+            user.save({ validateBeforeSave: false })
+
+            return { accessToken, refreshToken }
         } catch (error) {
             throw new apiErrors(500, "Something went wrong")
         }
@@ -92,31 +92,31 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new apiErrors(401, "Incorrect credentials")
     }
 
-    const {accessToken,refreshToken} = await generateAccessandRefreshTokens(user._id)
+    const { accessToken, refreshToken } = await generateAccessandRefreshTokens(user._id)
 
     const loogedInUser = await User.findById(user._id).select(" -password -refreshTockens ")
 
-    const options ={
+    const options = {
         httpOnly: true,
         secure: true
     }
 
     return res
-    .status(200)
-    .cookie("accessToken",accessToken)
-    .cookie("refreshToken",refreshToken)
-    .json(
-        new apiRes(
-            200,{
-                user: loogedInUser, accessToken , refreshToken
+        .status(200)
+        .cookie("accessToken", accessToken)
+        .cookie("refreshToken", refreshToken)
+        .json(
+            new apiRes(
+                200, {
+                user: loogedInUser, accessToken, refreshToken
             },
-            "User Logged In Successfully"
+                "User Logged In Successfully"
+            )
         )
-    )
 
 })
 
-const logoutUser = asyncHandler(async(req,res)=>{
+const logoutUser = asyncHandler(async (req, res) => {
     //clear refreshtoken
     await User.findByIdAndUpdate(
         req.user._id,
@@ -131,16 +131,16 @@ const logoutUser = asyncHandler(async(req,res)=>{
     )
 
     //clear cookies
-    const options ={
+    const options = {
         httpOnly: true,
         secure: true
     }
 
     return res
-    .status(200)
-    .clearCookie("accessToken",options)
-    .clearCookie("refreshToken",options)
-    .json(new apiRes(200, "User Logged Out Successfully:))"))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new apiRes(200, "User Logged Out Successfully:))"))
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -212,33 +212,120 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             error?.message || "Invalid refresh token"
         );
     }
-});
+})
 
-const changeCurrentPassword = asyncHandler(async(req,res)=>{
-    const {oldpassword,newpassword} = req.body;
-    const user = await User.findById(req.user?.id)
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldpassword, newpassword } = req.body;
+    const user = await User.findById(req.user?._id)
 
     const isPasswordCorrect = await user.isPasswordCorrect(oldpassword)
 
-    if(!isPasswordCorrect){
-        throw new apiErrors(400,"Invaid Password")
+    if (!isPasswordCorrect) {
+        throw new apiErrors(400, "Invaid Password")
     }
 
     user.password = newpassword
     user.save({
-        validateBeforeSave:false
+        validateBeforeSave: false
     })
 
     return res
-    .status(200)
-    .json(new apiRes(200,{},"Password change succesffully"))
+        .status(200)
+        .json(new apiRes(200, {}, "Password change succesffully"))
 })
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(200, req.user, "Current user fetched succesfully")
+})
 
-const getCurrentUser = asyncHandler(async(req,res)=>{
+const changeAccountDetails = asyncHandler(async (req, res) => {
+    const { fullName, email } = req.body
+
+    if (!fullName || !email) {
+        throw new apiErrors(400, "All fields are required")
+    }
+
+    const user = User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                fullName,
+                email
+            }
+        },
+        { new: true }
+    ).select("-password")
+
+    return res.status(200)
+        .json(new apiRes(200, {}, "Fullname and Email is updated"))
+})
+
+const changeAvatarFile = asyncHandler(async(req,res)=>{
+    const avatarlocalPath = req.file?.path
+
+    if(!avatarlocalPath){
+        throw new apiErrors(400,"File is missing")
+    }
+
+    const avatarUpload = await uploadOncloudinary(avatarlocalPath)
+
+    if(!avatarUpload){
+        throw new apiErrors(400,"Error while uploading")
+    }
+
+    const user = await User.findById(
+        req.user?._id,
+        {
+            $set:{
+                avatar: avatar.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+
     return res
     .status(200)
-    .json(200,req.user,"Current user fetched succesfully")
+    .json(new apiRes(200,{},"Avatar updated succesffully"))
 })
 
-export { userRegister, loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser }
+const changeCoverImage = asyncHandler(async(req,res)=>{
+    const coverImagelocalPath = req.file?.path
+
+    if(!coverImagelocalPath){
+        throw new apiErrors(400,"File is missing")
+    }
+
+    const coverUpload = await uploadOncloudinary(coverImagelocalPath)
+
+    if(!coverUpload){
+        throw new apiErrors(400,"Error while uploading")
+    }
+
+    const user = await User.findById(
+        req.user?._id,
+        {
+            $set:{
+                coverImage: coverImage.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new apiRes(200,{},"Cover Image updated succesffully"))
+})
+
+export {
+    userRegister,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    changeAccountDetails,
+    changeAvatarFile,
+    changeCoverImage
+}
