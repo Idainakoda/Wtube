@@ -1,5 +1,5 @@
 import {Router} from "express";
-import { userRegister,loginUser,logoutUser,refreshAccessToken } from "../controllers/user.controller.js";
+import { userRegister,loginUser,logoutUser,refreshAccessToken,getUserChannelProfile } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -27,5 +27,6 @@ router.post(
     "/refresh-token",
     refreshAccessToken
 );
+router.route("/channelProfile/:username").get(verifyJWT, getUserChannelProfile);
 
 export default router;

@@ -34,14 +34,17 @@ const generateAccessAndRefreshTokens = async (userId) => {
         };
 
     } catch (error) {
+        console.log("ACTUAL TOKEN ERROR:", error);
+
         if (error instanceof apiErrors) {
             throw error;
         }
 
         throw new apiErrors(
             500,
-            "Something went wrong while generating tokens"
+            error.message || "Something went wrong while generating tokens"
         );
+
     }
 };
 
@@ -715,6 +718,98 @@ const changeCoverImage = asyncHandler(
 
 
 // ======================================================
+// GET THE DETAILS OF THE SUBSCRIBERS AND SUNSCRIPTIONS OF CHANNELS
+// ======================================================
+
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params
+
+    if (!username?.trim) {
+        throw new apiErrors(400, "Username is missing ")
+    }
+
+    const channel = await User.aggregate([
+        {//1st pipeline
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+
+        {//to find subscribers of the user
+
+            $lookup: {
+                from: "Subscription",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+
+        },
+
+        {//to find the subscriptoin of the user
+
+            $lookup: {
+                from: "Subscription",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+
+        },
+
+        {
+            $addFields: {
+
+                subscriberCount: {
+                    $size: "$subscribers"
+                },
+
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        then: true,
+                        else: false
+                    }
+                }
+
+
+            }
+        },
+
+        {
+
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscriberCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+
+                avatar: 1,
+                coverImage: 1,
+                email: 1
+
+
+            }
+
+        }
+    ])
+
+    if(!channel?.length){
+        throw new apiErrors(404,"Channel does not exist")
+    }
+
+    console.log(channel);
+    return res
+        .status(200)
+        .json(new apiRes(200,channel[0],"User channel found"));
+});
+
+// ======================================================
 // EXPORT
 // ======================================================
 
@@ -727,5 +822,6 @@ export {
     getCurrentUser,
     changeAccountDetails,
     changeAvatarFile,
-    changeCoverImage
+    changeCoverImage,
+    getUserChannelProfile
 };
