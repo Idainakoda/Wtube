@@ -1,12 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 
-const tweetSchema = new Schema({
+const tweetSchema = new Schema({ 
     owner:{
         type: Schema.Types.ObjectId,
         ref: "User"
     },
     content:{
-        type:Number,
+        type:String,
         require:true
     }
     
