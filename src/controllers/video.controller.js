@@ -153,15 +153,6 @@ const getVideoById = asyncHandler(async (req, res) => {
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner",
-                pipeline: [
-                    {
-                        $project: {
-                            username: 1,
-                            fullName: 1,
-                            avatar: 1
-                        }
-                    }
-                ]
             }
         },
         {
@@ -174,7 +165,11 @@ const getVideoById = asyncHandler(async (req, res) => {
                 description: 1,
                 thumbnail: 1,
                 duration: 1,
-                owner: 1
+                owner: {
+                    username: "$owner.username",
+                    fullName: "$owner.fullName",
+                    avatar: "$owner.avatar"
+                }
             }
         }
     );
