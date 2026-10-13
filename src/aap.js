@@ -22,10 +22,16 @@ import userRouter from "./routes/userRouter.js";
 import videoRouter from "./routes/video.routes.js";
 import commentRouter from "./routes/commentRouter.js";
 import likeRouter from "./routes/likeRouter.js";
+import playlistRouter from "./routes/playlistRouter.js";
+import subscriptionRouter from "./routes/subscriptionRouter.js";
+import tweetRouter from "./routes/tweetRouter.js";
 
 
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/videos",videoRouter)
 app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/likes", likeRouter)
+app.use("/api/v1/playlists", playlistRouter)
+app.use("/api/v1/subscriptions", subscriptionRouter)
+app.use("/api/v1/tweet", tweetRouter)
 export { app };
