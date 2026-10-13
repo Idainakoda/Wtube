@@ -136,9 +136,9 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 const getLikedVideos = asyncHandler(async (req, res) => {
     
 
-    const {userId} = req.user._id;
+    const userId = req.user._id;
 
-    const likeVideo = await aggregatePipeline([
+    const likeVideo = await Like.aggregate([
         {
             $match:{
                 likedBy: new mongoose.Types.ObjectId(userId) 
@@ -153,7 +153,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
             }
         },
         {
-            $unwind:"video"
+            $unwind:"$video"
         },
         {
             $lookup:{
@@ -164,20 +164,20 @@ const getLikedVideos = asyncHandler(async (req, res) => {
             }
         },
         {
-            $unwind:"video.owner"
+            $unwind:"$video.owner"
         },
         {
             $project:{
                 id:0,
                 video:{
-                    _id:"$video.videoId",
+                    _id:"$video._id",
                     videoFile:"$video.videoFile",
                     thubnail:"$video.thumbnail",
                     title:"$video.title",
                     description:"$video.description",
                     views:"$video.views",
                     owner:{
-                        _id:"$owner.userId",
+                        _id:"$owner._id",
                         fullname:"$owner.fullName",
                         username:"$owner.username",
                         avatar:"$owner.avatar"
