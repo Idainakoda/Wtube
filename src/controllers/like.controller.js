@@ -1,7 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiErrors } from "../utils/apiErrors.js";
 import { apiRes } from "../utils/Apiresponse.js";
-import jwt from "jsonwebtoken";
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
 import { Like } from "../models/like.model.js";
@@ -135,68 +134,67 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 
 const getLikedVideos = asyncHandler(async (req, res) => {
+    
 
-    const likedVideos = await Like.aggregate([
+    const {userId} = req.user._id;
+
+    const likeVideo = await aggregatePipeline([
         {
-            $match: {
-                likedBy: new mongoose.Types.ObjectId(req.user._id)
+            $match:{
+                likedBy: new mongoose.Types.ObjectId(userId) 
             }
         },
-
         {
-            $lookup: {
-                from: "videos",
-                localField: "video",
-                foreignField: "_id",
-                as: "video"
+            $lookup:{
+                from:"videos",
+                localfield:"video",
+                foreignfield:"_id",
+                as:"video"
             }
         },
-
         {
-            $unwind: "$video"
+            $unwind:"video"
         },
-
         {
-            $lookup: {
-                from: "users",
-                localField: "video.owner",
-                foreignField: "_id",
-                as: "video.owner"
+            $lookup:{
+                from:"users",
+                localfield:"video.owner",
+                foreignfield:"_id",
+                as:"video.owner"
             }
         },
-
         {
-            $unwind: "$video.owner"
+            $unwind:"video.owner"
         },
-
         {
-            $project: {
-                _id: 0,
-                video: {
-                    _id: "$video._id",
-                    title: "$video.title",
-                    description: "$video.description",
-                    thumbnail: "$video.thumbnail",
-                    videoFile: "$video.videoFile",
-                    duration: "$video.duration",
-                    owner: {
-                        _id: "$video.owner._id",
-                        username: "$video.owner.username",
-                        fullName: "$video.owner.fullName",
-                        avatar: "$video.owner.avatar"
+            $project:{
+                id:0,
+                video:{
+                    _id:"$video.videoId",
+                    videoFile:"$video.videoFile",
+                    thubnail:"$video.thumbnail",
+                    title:"$video.title",
+                    description:"$video.description",
+                    views:"$video.views",
+                    owner:{
+                        _id:"$owner.userId",
+                        fullname:"$owner.fullName",
+                        username:"$owner.username",
+                        avatar:"$owner.avatar"
                     }
                 }
             }
         }
-    ]);
+    ])
 
-    return res.status(200).json(
-        new apiRes(
-            200,
-            likedVideos,
-            "Liked videos fetched successfully"
-        )
-    );
+    return res
+    .status(200)
+    .json(new apiRes(
+        200,
+        {likeVideo},
+        "all liked videos fetched succeasfully :)"
+    ))
+
 });
 
 export{
