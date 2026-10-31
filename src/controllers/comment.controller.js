@@ -3,6 +3,7 @@ import { apiErrors } from "../utils/apiErrors.js";
 import { apiRes } from "../utils/apiResponse.js";
 import mongoose from "mongoose";
 import { Video } from "../models/video.model.js";
+import { Comment } from "../models/comment.model.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
     const { videoId } = req.params
@@ -19,7 +20,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
             $lookup: {
                 from: "users",
                 localField: "owner",
-                foreignfield: "_id",
+                foreignField: "_id",
                 as: "owner"
             }
         },

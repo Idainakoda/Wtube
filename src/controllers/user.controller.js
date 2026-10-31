@@ -23,7 +23,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
-        user.refreshTockens = refreshToken;
+        user.refreshTokens = refreshToken;
 
         await user.save({
             validateBeforeSave: false
@@ -138,7 +138,7 @@ const userRegister = asyncHandler(async (req, res) => {
 
     // Get created user without sensitive fields
     const createdUser = await User.findById(user._id)
-        .select("-password -refreshTockens");
+        .select("-password -refreshTokens");
 
 
     if (!createdUser) {
@@ -225,7 +225,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // Get logged-in user
     const loggedInUser = await User.findById(user._id)
-        .select("-password -refreshTockens");
+        .select("-password -refreshTokens");
 
 
     // Cookie options
@@ -264,7 +264,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         req.user._id,
         {
             $set: {
-                refreshTockens: 1
+                refreshTokens: 1
             }
         },
         {
@@ -340,7 +340,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     // 6. Compare stored refresh token
     if (
         incomingRefreshToken !==
-        user.refreshTockens
+        user.refreshTokens
     ) {
         throw new apiErrors(
             401,
@@ -504,7 +504,7 @@ const changeAccountDetails = asyncHandler(
             {
                 new: true
             }
-        ).select("-password -refreshTockens");
+        ).select("-password -refreshTokens");
 
 
         if (!user) {
@@ -613,7 +613,7 @@ const changeAvatarFile = asyncHandler(
                 {
                     new: true
                 }
-            ).select("-password -refreshTockens");
+            ).select("-password -refreshTokens");
 
 
         // Delete old image from Cloudinary
@@ -698,7 +698,7 @@ const changeCoverImage = asyncHandler(
                 {
                     new: true
                 }
-            ).select("-password -refreshTockens");
+            ).select("-password -refreshTokens");
 
 
         // Delete old image
@@ -725,7 +725,7 @@ const changeCoverImage = asyncHandler(
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params
 
-    if (!username?.trim) {
+    if (!username?.trim()) {
         throw new apiErrors(400, "Username is missing ")
     }
 

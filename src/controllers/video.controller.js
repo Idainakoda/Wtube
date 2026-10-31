@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiErrors } from "../utils/apiErrors.js";
-import { uploadOncloudinary,deletefromCloudinary } from "../utils/clodinary.js";
+import { uploadOncloudinary, deletefromCloudinary } from "../utils/clodinary.js";
 import { apiRes } from "../utils/apiResponse.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
@@ -73,7 +73,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
         {
             $sort: {
-                [sortBy]: sortOrder
+                [safeSortBy]: sortOrder
             }
         }
     ]
@@ -105,7 +105,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description } = req.body
 
     const videoLocalPath = req.files?.videoFile?.[0].path;
-    const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
+    const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
     if (!videoLocalPath || !thumbnailLocalPath) {
         throw new apiErrors(400, "File not found")
@@ -143,8 +143,8 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     const video = await Video.aggregate(
         [{
-            $match:{
-                _id:new mongoose.Types.ObjectId(videoId)
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
             }
         },
         {
@@ -274,21 +274,21 @@ const updateVideo = asyncHandler(async (req, res) => {
 });
 
 
-const deleteVideo = asyncHandler(async(req,res)=>{
-    const {videoId} = req.params
+const deleteVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
 
     const video = await Video.findById(videoId)
 
-    if(!video){
-        throw new apiErrors(404,"Video not found")
+    if (!video) {
+        throw new apiErrors(404, "Video not found")
     }
 
-    if(video.owner.toString()!== req.user._id.toString()){
+    if (video.owner.toString() !== req.user._id.toString()) {
         throw new apiErrors(403, "You are not allowded to delete the video")
     }
 
     await deletefromCloudinary(video.videoFile)
-    
+
     await Video.findByIdAndDelete(videoId)
 
     return res
@@ -302,16 +302,16 @@ const deleteVideo = asyncHandler(async(req,res)=>{
         )
 })
 
-const togglepublishStatus = asyncHandler(async(req,res)=>{
-    const {videoId} = req.params
+const togglepublishStatus = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
 
     const video = await Video.findById(videoId)
 
-    if(!video){
-        throw new apiErrors(404,"Video not found")
+    if (!video) {
+        throw new apiErrors(404, "Video not found")
     }
 
-    if(video.owner.toString()!== req.user._id.toString()){
+    if (video.owner.toString() !== req.user._id.toString()) {
         throw new apiErrors(403, "You are not allowed to change the publish status")
     }
 
@@ -320,14 +320,14 @@ const togglepublishStatus = asyncHandler(async(req,res)=>{
     await video.save()
 
     return res
-    .status(200)
-    .json(
-        new apiRes(
-            200,
-            {},
-            "Video Publish Status complete"    
+        .status(200)
+        .json(
+            new apiRes(
+                200,
+                {},
+                "Video Publish Status complete"
+            )
         )
-    )
 })
 
 export {
