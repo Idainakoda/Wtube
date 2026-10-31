@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import { Tweet } from "../models/tweet.model.js";
+import { Tweet } from "../models/tweets.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiErrors } from "../utils/apiErrors.js";
-import { apiRes } from "../utils/apiRes.js";
+import { apiRes } from "../utils/apiResponse.js";
 
 
 const createTweet = asyncHandler(async (req, res) => {

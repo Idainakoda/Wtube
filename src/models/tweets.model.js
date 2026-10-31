@@ -7,9 +7,9 @@ const tweetSchema = new Schema({
     },
     content:{
         type:String,
-        require:true
+        required:true
     }
     
 },{timestamps:true})
 
-export const Tweet = mongoose.model("Comment", tweetSchema)
+export const Tweet = mongoose.model("Tweet", tweetSchema)

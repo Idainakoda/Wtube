@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiErrors } from "../utils/apiErrors.js";
 import { uploadOncloudinary,deletefromCloudinary } from "../utils/clodinary.js";
-import { apiRes } from "../utils/Apiresponse.js";
+import { apiRes } from "../utils/apiResponse.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
 
@@ -104,7 +104,7 @@ const publishVideo = asyncHandler(async (req, res) => {
 
     const { title, description } = req.body
 
-    const videoLocalPath = req.files?.videoFile[0]?.path;
+    const videoLocalPath = req.files?.videoFile?.[0].path;
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
 
     if (!videoLocalPath || !thumbnailLocalPath) {
@@ -142,7 +142,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
     const video = await Video.aggregate(
-        {
+        [{
             $match:{
                 _id:new mongoose.Types.ObjectId(videoId)
             }
@@ -171,7 +171,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                     avatar: "$owner.avatar"
                 }
             }
-        }
+        }]
     );
 
     if (!video.length) {
@@ -185,18 +185,20 @@ const getVideoById = asyncHandler(async (req, res) => {
         )
 })
 
+
 const updateVideo = asyncHandler(async (req, res) => {
 
-    const { videoId } = req.params
+    const { videoId } = req.params;
+    const { title, description } = req.body;
 
-    const { title, description } = req.body
-
-    const video = await Video.findById(videoId)
+    // 1. Find the video
+    const video = await Video.findById(videoId);
 
     if (!video) {
-        throw new apiErrors(404, "Video not found :(")
+        throw new apiErrors(404, "Video not found");
     }
 
+    // 2. Check ownership
     if (
         video.owner.toString() !==
         req.user._id.toString()
@@ -207,41 +209,70 @@ const updateVideo = asyncHandler(async (req, res) => {
         );
     }
 
-    const thumbnailLocalPath = req.file?.path;
+    // 3. Prepare fields to update
+    const updateFields = {};
 
-    const thumbnailUpload = await uploadOncloudinary(thumbnailLocalPath)
+    if (title !== undefined) {
+        if (!title.trim()) {
+            throw new apiErrors(400, "Title cannot be empty");
+        }
 
-    if (!thumbnailUpload) {
-        throw new apiErrors(404, "video file upload unsuccessfull :(")
+        updateFields.title = title.trim();
     }
 
-    const thumbnail = thumbnailUpload.url
+    if (description !== undefined) {
+        updateFields.description = description;
+    }
 
+    // 4. Upload thumbnail only if provided
+    const thumbnailLocalPath = req.file?.path;
+
+    if (thumbnailLocalPath) {
+
+        const thumbnailUpload = await uploadOncloudinary(
+            thumbnailLocalPath
+        );
+
+        if (!thumbnailUpload) {
+            throw new apiErrors(
+                400,
+                "Thumbnail upload unsuccessful"
+            );
+        }
+
+        updateFields.thumbnail = thumbnailUpload.url;
+    }
+
+    // 5. Check whether anything was provided
+    if (Object.keys(updateFields).length === 0) {
+        throw new apiErrors(
+            400,
+            "Please provide something to update"
+        );
+    }
+
+    // 6. Update video in MongoDB
     const videoDetailsUpdate = await Video.findByIdAndUpdate(
         videoId,
         {
-            $set: {
-                title,
-                description,
-                thumbnail: thumbnail
-            },
-        }, 
+            $set: updateFields
+        },
         {
-            new: true
+            new: true,
+            runValidators: true
         }
-    )
+    );
 
-    if(!videoDetailsUpdate){
-        throw new apiErrors(404,"Update details unsuccessfull:(")
-    }
+    return res.status(200).json(
+        new apiRes(
+            200,
+            videoDetailsUpdate,
+            "Video details updated successfully"
+        )
+    );
 
-    return res
-    .status(200)
-    .json(
-        new apiRes(200,videoDetailsUpdate,"Details updated successfully :)")
-    )
+});
 
-})
 
 const deleteVideo = asyncHandler(async(req,res)=>{
     const {videoId} = req.params

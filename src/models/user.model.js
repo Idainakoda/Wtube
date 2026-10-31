@@ -7,7 +7,7 @@ const userSchema = new Schema({
         type: String,
         required: true,
         unique: true,
-        lowecase: true,
+        lowercase: true,
         trim: true,
         index: true
     },
@@ -15,7 +15,7 @@ const userSchema = new Schema({
     email: {
         type: String,
         required: true,
-        lowecase: true,
+        lowercase: true,
         trim: true
     },
 
@@ -45,7 +45,7 @@ const userSchema = new Schema({
         required: [true, "Password is Required"]
     },
 
-    refreshTockens: {
+    refreshTokens: {
         type: String
     }
 

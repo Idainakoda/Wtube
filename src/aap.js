@@ -6,7 +6,7 @@ const app = express();
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
-    Credential:true    
+    credential:true    
 }))
 
 app.use(express.json({limit:"16kb"}))
@@ -19,7 +19,7 @@ app.use(cookieParser())
 // imporing routes
 
 import userRouter from "./routes/userRouter.js";
-import videoRouter from "./routes/video.routes.js";
+import videoRouter from "./routes/videoRouter.js";
 import commentRouter from "./routes/commentRouter.js";
 import likeRouter from "./routes/likeRouter.js";
 import playlistRouter from "./routes/playlistRouter.js";

@@ -3,16 +3,16 @@ import mongoose, { Schema } from "mongoose";
 const playlistSchema = new Schema({
     name:{
         type:String,
-        require:true
+        required:true
     },
     description:{
         type:String,
-        require:true
+        required:true
     },
-    videos:{
+    videos:[{
         type: Schema.Types.ObjectId,
         ref: "Video"
-    },
+    }],
     owner:{
         type: Schema.Types.ObjectId,
         ref: "User"

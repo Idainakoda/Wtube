@@ -1,9 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiErrors } from "../utils/apiErrors.js";
-import { apiRes } from "../utils/Apiresponse.js";
-import mongoose, { isValidObjectId } from "mongoose";
+import { apiRes } from "../utils/apiResponse.js";
+import mongoose from "mongoose";
 import { Video } from "../models/video.model.js";
 import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
+import { Tweet } from "../models/tweets.model.js";
 
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
@@ -134,53 +136,53 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    
+
 
     const userId = req.user._id;
 
     const likeVideo = await Like.aggregate([
         {
-            $match:{
-                likedBy: new mongoose.Types.ObjectId(userId) 
+            $match: {
+                likedBy: new mongoose.Types.ObjectId(userId)
             }
         },
         {
-            $lookup:{
-                from:"videos",
-                localfield:"video",
-                foreignfield:"_id",
-                as:"video"
+            $lookup: {
+                from: "videos",
+                localField: "video",
+                foreignfield: "_id",
+                as: "video"
             }
         },
         {
-            $unwind:"$video"
+            $unwind: "$video"
         },
         {
-            $lookup:{
-                from:"users",
-                localfield:"video.owner",
-                foreignfield:"_id",
-                as:"video.owner"
+            $lookup: {
+                from: "users",
+                localField: "video.owner",
+                foreignfield: "_id",
+                as: "owner"
             }
         },
         {
-            $unwind:"$video.owner"
+            $unwind: "$owner"
         },
         {
-            $project:{
-                id:0,
-                video:{
-                    _id:"$video._id",
-                    videoFile:"$video.videoFile",
-                    thubnail:"$video.thumbnail",
-                    title:"$video.title",
-                    description:"$video.description",
-                    views:"$video.views",
-                    owner:{
-                        _id:"$owner._id",
-                        fullname:"$owner.fullName",
-                        username:"$owner.username",
-                        avatar:"$owner.avatar"
+            $project: {
+                id: 0,
+                video: {
+                    _id: "$video._id",
+                    videoFile: "$video.videoFile",
+                    thubnail: "$video.thumbnail",
+                    title: "$video.title",
+                    description: "$video.description",
+                    views: "$video.views",
+                    owner: {
+                        _id: "$owner._id",
+                        fullname: "$owner.fullName",
+                        username: "$owner.username",
+                        avatar: "$owner.avatar"
                     }
                 }
             }
@@ -188,16 +190,16 @@ const getLikedVideos = asyncHandler(async (req, res) => {
     ])
 
     return res
-    .status(200)
-    .json(new apiRes(
-        200,
-        {likeVideo},
-        "all liked videos fetched succeasfully :)"
-    ))
+        .status(200)
+        .json(new apiRes(
+            200,
+            { likeVideo },
+            "all liked videos fetched succeasfully :)"
+        ))
 
 });
 
-export{
+export {
     toggleVideoLike,
     toggleCommentLike,
     toggleTweetLike,
