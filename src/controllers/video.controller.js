@@ -5,6 +5,20 @@ import { apiRes } from "../utils/apiResponse.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
 
+
+const allowedSortFields = [
+    "createdAt",
+    "views",
+    "duration",
+    "title"
+];
+
+const safeSortBy = (sortBy) => {
+    return allowedSortFields.includes(sortBy)
+        ? sortBy
+        : "createdAt";
+};
+
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query
 
